@@ -1,0 +1,6 @@
+{
+  "name": "IurisExpediente - Expediente Digital Legaltech",
+  "description": "Sistema para registrar, validar y centralizar la información inicial de expedientes judiciales para despachos jurídicos.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
