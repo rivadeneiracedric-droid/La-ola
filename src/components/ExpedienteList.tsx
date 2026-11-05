@@ -1,5 +1,13 @@
 import React, { useState, useMemo } from 'react';
-import { Expediente } from '../types/expediente';
+import {
+  Expediente,
+  PlazoProcesal,
+  ActuacionProcesal,
+} from '../types/expediente';
+import {
+  esPlazoVencido,
+  etiquetaProcedimiento,
+} from '../services/expedienteService';
 import {
   Search,
   FolderPlus,
@@ -9,10 +17,15 @@ import {
   ChevronRight,
   Scale,
   Trash2,
+  AlertTriangle,
+  CalendarClock,
+  ClipboardList,
 } from 'lucide-react';
 
 interface ExpedienteListProps {
   expedientes: Expediente[];
+  plazos: PlazoProcesal[];
+  actuaciones: ActuacionProcesal[];
   onSeleccionarExpediente: (expediente: Expediente) => void;
   onNuevoExpediente: () => void;
   onEliminarExpediente: (id: string) => void;
@@ -21,6 +34,8 @@ interface ExpedienteListProps {
 
 export const ExpedienteList: React.FC<ExpedienteListProps> = ({
   expedientes,
+  plazos,
+  actuaciones,
   onSeleccionarExpediente,
   onNuevoExpediente,
   onEliminarExpediente,
@@ -30,6 +45,45 @@ export const ExpedienteList: React.FC<ExpedienteListProps> = ({
   const [filtroMateria, setFiltroMateria] = useState<string>('todas');
   const [confirmandoEliminarId, setConfirmandoEliminarId] = useState<string | null>(null);
   const [confirmandoBorrarTodos, setConfirmandoBorrarTodos] = useState<boolean>(false);
+
+  const resumenPorExpediente = useMemo(() => {
+    const ahoraMs = Date.now();
+    const mapa: Record<
+      string,
+      { pendientes: number; vencidos: number; actuaciones: number }
+    > = {};
+
+    for (const p of plazos) {
+      if (!mapa[p.expedienteId]) {
+        mapa[p.expedienteId] = { pendientes: 0, vencidos: 0, actuaciones: 0 };
+      }
+      if (p.estado === 'Pendiente') {
+        mapa[p.expedienteId].pendientes += 1;
+        if (esPlazoVencido(p, ahoraMs)) {
+          mapa[p.expedienteId].vencidos += 1;
+        }
+      }
+    }
+
+    for (const a of actuaciones) {
+      if (!mapa[a.expedienteId]) {
+        mapa[a.expedienteId] = { pendientes: 0, vencidos: 0, actuaciones: 0 };
+      }
+      mapa[a.expedienteId].actuaciones += 1;
+    }
+
+    return mapa;
+  }, [plazos, actuaciones]);
+
+  const totalPlazosPendientes = useMemo(
+    () => plazos.filter((p) => p.estado === 'Pendiente').length,
+    [plazos]
+  );
+
+  const totalPlazosVencidos = useMemo(() => {
+    const ahoraMs = Date.now();
+    return plazos.filter((p) => esPlazoVencido(p, ahoraMs)).length;
+  }, [plazos]);
 
   // Filtrado reactivo en tiempo real
   const expedientesFiltrados = useMemo(() => {
@@ -53,7 +107,6 @@ export const ExpedienteList: React.FC<ExpedienteListProps> = ({
     });
   }, [expedientes, busqueda, filtroMateria]);
 
-  // Formato breve de fecha
   const formatearFechaCorta = (iso: string) => {
     try {
       const d = new Date(iso);
@@ -82,13 +135,13 @@ export const ExpedienteList: React.FC<ExpedienteListProps> = ({
             Expedientes Digitales Centralizados
           </h1>
           <p className="text-sm text-slate-600 mt-1">
-            Registro inicial, control de apertura y trazabilidad para el despacho jurídico.
+            Registro inicial, control de plazos procesales y bitácora de actuaciones en EXP-Legal (La Ola).
           </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-2.5 self-start md:self-auto">
-          {expedientes.length > 0 && (
-            confirmandoBorrarTodos ? (
+          {expedientes.length > 0 &&
+            (confirmandoBorrarTodos ? (
               <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-rose-200 bg-rose-50 text-xs">
                 <span className="font-medium text-rose-900 whitespace-nowrap">
                   ¿Borrar los {expedientes.length} expedientes?
@@ -117,8 +170,7 @@ export const ExpedienteList: React.FC<ExpedienteListProps> = ({
                 <Trash2 className="w-3.5 h-3.5" />
                 <span>Borrar todos</span>
               </button>
-            )
-          )}
+            ))}
 
           <button
             type="button"
@@ -142,27 +194,49 @@ export const ExpedienteList: React.FC<ExpedienteListProps> = ({
         </div>
 
         <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs">
-          <span className="text-xs font-medium text-slate-500 block">Estado Abierto</span>
-          <span className="text-2xl font-bold font-mono tabular-nums text-emerald-700 mt-1 block">
-            {expedientes.filter((e) => e.estado === 'Abierto').length}
-          </span>
-          <span className="text-[11px] text-slate-500 mt-0.5 block">100% activos en trámite</span>
-        </div>
-
-        <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs">
-          <span className="text-xs font-medium text-slate-500 block">Con Proceso Judicial</span>
+          <span className="text-xs font-medium text-slate-500 block">Plazos Pendientes</span>
           <span className="text-2xl font-bold font-mono tabular-nums text-slate-900 mt-1 block">
-            {expedientes.filter((e) => Boolean(e.numeroProceso)).length}
+            {totalPlazosPendientes}
           </span>
-          <span className="text-[11px] text-slate-500 mt-0.5 block">Radicados ante tribunales</span>
+          <span className="text-[11px] text-slate-500 mt-0.5 block">Términos judiciales activos</span>
+        </div>
+
+        <div
+          className={`p-4 rounded-xl border shadow-2xs ${
+            totalPlazosVencidos > 0
+              ? 'bg-red-50/70 border-red-300'
+              : 'bg-white border-slate-200'
+          }`}
+        >
+          <span
+            className={`text-xs font-medium block ${
+              totalPlazosVencidos > 0 ? 'text-red-800' : 'text-slate-500'
+            }`}
+          >
+            Plazos Vencidos
+          </span>
+          <span
+            className={`text-2xl font-bold font-mono tabular-nums mt-1 block ${
+              totalPlazosVencidos > 0 ? 'text-red-700' : 'text-slate-900'
+            }`}
+          >
+            {totalPlazosVencidos}
+          </span>
+          <span
+            className={`text-[11px] mt-0.5 block ${
+              totalPlazosVencidos > 0 ? 'text-red-700 font-medium' : 'text-slate-500'
+            }`}
+          >
+            {totalPlazosVencidos > 0 ? 'Requieren atención inmediata' : 'Sin vencimientos pendientes'}
+          </span>
         </div>
 
         <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs">
-          <span className="text-xs font-medium text-slate-500 block">Prejudiciales / Apertura</span>
-          <span className="text-2xl font-bold font-mono tabular-nums text-amber-700 mt-1 block">
-            {expedientes.filter((e) => !e.numeroProceso).length}
+          <span className="text-xs font-medium text-slate-500 block">Actuaciones en Bitácora</span>
+          <span className="text-2xl font-bold font-mono tabular-nums text-slate-900 mt-1 block">
+            {actuaciones.length}
           </span>
-          <span className="text-[11px] text-slate-500 mt-0.5 block">Sin proceso externo aún</span>
+          <span className="text-[11px] text-slate-500 mt-0.5 block">Novedades registradas</span>
         </div>
       </div>
 
@@ -257,11 +331,21 @@ export const ExpedienteList: React.FC<ExpedienteListProps> = ({
         <div className="space-y-3">
           {expedientesFiltrados.map((exp) => {
             const estaConfirmando = confirmandoEliminarId === exp.id;
+            const stats = resumenPorExpediente[exp.id] || {
+              pendientes: 0,
+              vencidos: 0,
+              actuaciones: 0,
+            };
+
             return (
               <div
                 key={exp.id}
                 onClick={() => onSeleccionarExpediente(exp)}
-                className="group bg-white border border-slate-200 hover:border-slate-300 rounded-xl p-5 transition-all shadow-2xs hover:shadow-xs cursor-pointer"
+                className={`group bg-white border rounded-xl p-5 transition-all shadow-2xs hover:shadow-xs cursor-pointer ${
+                  stats.vencidos > 0
+                    ? 'border-red-300 hover:border-red-400'
+                    : 'border-slate-200 hover:border-slate-300'
+                }`}
               >
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   {/* Metadatos superiores */}
@@ -272,14 +356,36 @@ export const ExpedienteList: React.FC<ExpedienteListProps> = ({
                       </span>
                       <span aria-hidden="true">·</span>
                       <span className="capitalize font-medium text-slate-700">
-                        {exp.materia === 'otra' ? `Otra (${exp.materiaOtra || 'Esp.'})` : exp.materia}
+                        {exp.materia === 'otra'
+                          ? `Otra (${exp.materiaOtra || 'Esp.'})`
+                          : exp.materia}
                       </span>
+                      {(exp.materia === 'penal' || exp.tipoProceso) && (
+                        <>
+                          <span aria-hidden="true">·</span>
+                          <span className="font-medium text-slate-700">
+                            {exp.materia === 'penal'
+                              ? 'Proceso Penal'
+                              : etiquetaProcedimiento(exp.tipoProceso!)}
+                          </span>
+                        </>
+                      )}
                       <span aria-hidden="true">·</span>
-                      <span className="text-emerald-700 font-medium">
-                        {exp.estado}
-                      </span>
+                      <span className="text-emerald-700 font-medium">{exp.estado}</span>
                       <span aria-hidden="true">·</span>
                       <span>Apertura {formatearFechaCorta(exp.fechaApertura)}</span>
+                      {stats.vencidos > 0 && (
+                        <>
+                          <span aria-hidden="true">·</span>
+                          <span className="inline-flex items-center gap-1 text-red-700 font-semibold font-mono tabular-nums">
+                            <AlertTriangle className="w-3.5 h-3.5 text-red-600" />
+                            <span>
+                              {stats.vencidos}{' '}
+                              {stats.vencidos === 1 ? 'plazo vencido' : 'plazos vencidos'}
+                            </span>
+                          </span>
+                        </>
+                      )}
                     </div>
 
                     {/* Título */}
@@ -287,7 +393,7 @@ export const ExpedienteList: React.FC<ExpedienteListProps> = ({
                       {exp.titulo}
                     </h3>
 
-                    {/* Partes */}
+                    {/* Partes y contadores de seguimiento */}
                     <div className="mt-2.5 flex flex-wrap items-center gap-y-1 gap-x-4 text-xs text-slate-600">
                       <div className="flex items-center gap-1.5">
                         <User className="w-3.5 h-3.5 text-slate-400" />
@@ -314,6 +420,20 @@ export const ExpedienteList: React.FC<ExpedienteListProps> = ({
                           (Sin número judicial asignado)
                         </div>
                       )}
+
+                      {stats.pendientes > 0 && (
+                        <div className="flex items-center gap-1 text-slate-700 font-mono tabular-nums">
+                          <CalendarClock className="w-3.5 h-3.5 text-slate-400" />
+                          <span>{stats.pendientes} plazos pendientes</span>
+                        </div>
+                      )}
+
+                      {stats.actuaciones > 0 && (
+                        <div className="flex items-center gap-1 text-slate-700 font-mono tabular-nums">
+                          <ClipboardList className="w-3.5 h-3.5 text-slate-400" />
+                          <span>{stats.actuaciones} actuaciones</span>
+                        </div>
+                      )}
                     </div>
                   </div>
 
@@ -324,7 +444,9 @@ export const ExpedienteList: React.FC<ExpedienteListProps> = ({
                   >
                     {estaConfirmando ? (
                       <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-rose-50 border border-rose-200 text-xs">
-                        <span className="text-rose-900 font-medium whitespace-nowrap">¿Eliminar?</span>
+                        <span className="text-rose-900 font-medium whitespace-nowrap">
+                          ¿Eliminar?
+                        </span>
                         <button
                           type="button"
                           onClick={() => {
@@ -361,7 +483,7 @@ export const ExpedienteList: React.FC<ExpedienteListProps> = ({
                       onClick={() => onSeleccionarExpediente(exp)}
                       className="text-xs font-medium text-slate-500 group-hover:text-slate-900 transition-colors flex items-center gap-1 whitespace-nowrap shrink-0 cursor-pointer"
                     >
-                      Ver ficha de resumen
+                      Ver expediente
                       <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-slate-900 group-hover:translate-x-0.5 transition-all" />
                     </button>
                   </div>

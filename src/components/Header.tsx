@@ -30,11 +30,11 @@ export const Header: React.FC<HeaderProps> = ({
                 <Scale className="w-5 h-5 text-amber-400" />
               </div>
               <div>
-                <span className="text-lg font-bold tracking-tight text-slate-900 block leading-tight">
-                  IurisExpediente
+                <span className="text-lg font-bold tracking-tight text-slate-900 block leading-tight whitespace-nowrap">
+                  EXP-Legal
                 </span>
-                <span className="text-[11px] font-medium text-slate-500 block leading-none">
-                  Gestión Digital de Casos
+                <span className="text-[11px] font-medium text-slate-500 block leading-none whitespace-nowrap">
+                  La Ola · Gestión de Casos
                 </span>
               </div>
             </button>
@@ -43,20 +43,22 @@ export const Header: React.FC<HeaderProps> = ({
           {/* Zona 2: Enlaces de navegación concisos */}
           <nav className="hidden md:flex items-center gap-6 text-sm font-medium text-slate-600">
             <button
+              type="button"
               onClick={() => onCambiarVista('lista')}
-              className={`hover:text-slate-900 transition-colors whitespace-nowrap shrink-0 pb-0.5 ${
+              className={`hover:text-slate-900 transition-colors whitespace-nowrap shrink-0 pb-0.5 cursor-pointer ${
                 vistaActual === 'lista' ? 'text-slate-900 font-semibold border-b-2 border-slate-900' : ''
               }`}
             >
               Registro de Expedientes
             </button>
             <button
+              type="button"
               onClick={() => onCambiarVista('guia')}
-              className={`hover:text-slate-900 transition-colors whitespace-nowrap shrink-0 pb-0.5 ${
+              className={`hover:text-slate-900 transition-colors whitespace-nowrap shrink-0 pb-0.5 cursor-pointer ${
                 vistaActual === 'guia' ? 'text-slate-900 font-semibold border-b-2 border-slate-900' : ''
               }`}
             >
-              Especificaciones MVP 5.1-5.3
+              Especificaciones HU 01-03
             </button>
           </nav>
 

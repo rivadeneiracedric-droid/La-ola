@@ -1,12 +1,15 @@
 import React from 'react';
-import { CheckCircle2, Scale, ArrowLeft, ShieldCheck, Lock, FileText, Check } from 'lucide-react';
+import { CheckCircle2, ArrowLeft } from 'lucide-react';
 
 interface GuiaReglasViewProps {
   onVolver: () => void;
   onNuevoExpediente: () => void;
 }
 
-export const GuiaReglasView: React.FC<GuiaReglasViewProps> = ({ onVolver, onNuevoExpediente }) => {
+export const GuiaReglasView: React.FC<GuiaReglasViewProps> = ({
+  onVolver,
+  onNuevoExpediente,
+}) => {
   return (
     <div className="max-w-4xl mx-auto py-8 px-4 sm:px-6 space-y-6">
       <button
@@ -20,167 +23,94 @@ export const GuiaReglasView: React.FC<GuiaReglasViewProps> = ({ onVolver, onNuev
 
       <div className="border-b border-slate-200 pb-5">
         <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-          Especificaciones de la Historia de Usuario: MVP Legaltech
+          Especificaciones Funcionales: EXP-Legal (La Ola)
         </h1>
         <p className="text-sm text-slate-600 mt-1">
-          Verificación de cumplimiento de los alcances 5.1, 5.2 y 5.3 para la creación del expediente digital.
+          Alcance y reglas de negocio implementadas para HU-01, HU-02 y HU-03.
         </p>
       </div>
 
-      {/* 5.1 Alcance */}
+      {/* HU-01 */}
       <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-2xs space-y-3">
         <div className="flex items-center gap-2 text-xs font-bold text-slate-900 uppercase tracking-wide">
-          <span className="w-6 h-6 rounded-md bg-slate-900 text-white flex items-center justify-center font-mono text-xs">
-            5.1
+          <span className="px-2 py-1 rounded-md bg-slate-900 text-white font-mono text-xs">
+            HU-01
           </span>
-          <span>Alcance y Flujo de la Historia</span>
+          <span>Creación y Centralización de Expediente Digital</span>
         </div>
         <p className="text-sm text-slate-700 leading-relaxed">
-          <strong>Flujo implementado:</strong> Nuevo expediente → completar formulario → validar reglas de negocio → crear expediente → mostrar confirmación y ficha de resumen estructurada.
+          Registro inicial del caso jurídico con identificador interno único UUID v4 independiente del número judicial, validación obligatoria de título, cliente, materia y responsable, estado inicial <strong>Abierto</strong>, fecha de apertura automática y trazabilidad del creador según la sesión.
         </p>
-        <div className="grid grid-cols-1 sm:grid-cols-4 gap-2 pt-2 text-xs">
-          <div className="p-3 bg-slate-50 rounded-lg border border-slate-200">
-            <span className="font-semibold text-slate-900 block">1. Formulario</span>
-            <span className="text-slate-500 text-[11px]">Campos requeridos y complementarios ordenados.</span>
-          </div>
-          <div className="p-3 bg-slate-50 rounded-lg border border-slate-200">
-            <span className="font-semibold text-slate-900 block">2. Validación</span>
-            <span className="text-slate-500 text-[11px]">En tiempo real y al enviar, sin pérdida de datos.</span>
-          </div>
-          <div className="p-3 bg-slate-50 rounded-lg border border-slate-200">
-            <span className="font-semibold text-slate-900 block">3. Creación</span>
-            <span className="text-slate-500 text-[11px]">Genera UUID y timestamp de apertura inmutable.</span>
-          </div>
-          <div className="p-3 bg-slate-50 rounded-lg border border-slate-200">
-            <span className="font-semibold text-slate-900 block">4. Ficha Resumen</span>
-            <span className="text-slate-500 text-[11px]">Vista oficial con exportación a PDF y portapapeles.</span>
-          </div>
-        </div>
       </div>
 
-      {/* 5.2 Campos y Reglas */}
-      <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-2xs space-y-4">
-        <div className="flex items-center gap-2 text-xs font-bold text-slate-900 uppercase tracking-wide">
-          <span className="w-6 h-6 rounded-md bg-slate-900 text-white flex items-center justify-center font-mono text-xs">
-            5.2
-          </span>
-          <span>Campos del Expediente y Reglas de Negocio</span>
-        </div>
-
-        <div className="divide-y divide-slate-100 text-xs">
-          <div className="py-2.5 flex flex-col sm:flex-row sm:items-start justify-between gap-1">
-            <div className="font-semibold text-slate-900 sm:w-1/3">Identificador interno</div>
-            <div className="text-slate-600 sm:w-2/3">
-              Generado automáticamente mediante UUID v4 independiente. No depende de contadores manuales ni se expone a edición del usuario.
-            </div>
-          </div>
-
-          <div className="py-2.5 flex flex-col sm:flex-row sm:items-start justify-between gap-1">
-            <div className="font-semibold text-slate-900 sm:w-1/3">Número de proceso judicial</div>
-            <div className="text-slate-600 sm:w-2/3">
-              Opcional. Puede quedar vacío si todavía no existe un proceso judicial (trámites extrajudiciales o en elaboración).
-            </div>
-          </div>
-
-          <div className="py-2.5 flex flex-col sm:flex-row sm:items-start justify-between gap-1">
-            <div className="font-semibold text-slate-900 sm:w-1/3">Nombre o título del caso</div>
-            <div className="text-slate-600 sm:w-2/3">
-              Obligatorio. Texto breve que permite reconocer el asunto de inmediato.
-            </div>
-          </div>
-
-          <div className="py-2.5 flex flex-col sm:flex-row sm:items-start justify-between gap-1">
-            <div className="font-semibold text-slate-900 sm:w-1/3">Cliente</div>
-            <div className="text-slate-600 sm:w-2/3">
-              Obligatorio. Nombre ingresado directamente como texto, sin construir aún módulo independiente de clientes.
-            </div>
-          </div>
-
-          <div className="py-2.5 flex flex-col sm:flex-row sm:items-start justify-between gap-1">
-            <div className="font-semibold text-slate-900 sm:w-1/3">Materia</div>
-            <div className="text-slate-600 sm:w-2/3">
-              Obligatoria. Selección entre: <code>Civil</code>, <code>Laboral</code>, <code>Penal</code>, <code>Administrativa</code> u <code>Otra</code> (con campo de texto complementario si se elige Otra).
-            </div>
-          </div>
-
-          <div className="py-2.5 flex flex-col sm:flex-row sm:items-start justify-between gap-1">
-            <div className="font-semibold text-slate-900 sm:w-1/3">Tipo de asunto</div>
-            <div className="text-slate-600 sm:w-2/3">
-              Opcional. Texto breve para precisar la naturaleza del caso sin requerir catálogo cerrado.
-            </div>
-          </div>
-
-          <div className="py-2.5 flex flex-col sm:flex-row sm:items-start justify-between gap-1">
-            <div className="font-semibold text-slate-900 sm:w-1/3">Bitácora inicial</div>
-            <div className="text-slate-600 sm:w-2/3">
-              Resumen inicial de hechos, antecedentes y primeras instrucciones, ingresado por el usuario.
-            </div>
-          </div>
-
-          <div className="py-2.5 flex flex-col sm:flex-row sm:items-start justify-between gap-1">
-            <div className="font-semibold text-slate-900 sm:w-1/3">Responsable</div>
-            <div className="text-slate-600 sm:w-2/3">
-              Obligatorio. Se ingresa en el formulario sin precargar nombres ni requerir módulo de gestión de usuarios.
-            </div>
-          </div>
-
-          <div className="py-2.5 flex flex-col sm:flex-row sm:items-start justify-between gap-1">
-            <div className="font-semibold text-slate-900 sm:w-1/3">Estado</div>
-            <div className="text-slate-600 sm:w-2/3">
-              Valor inicial inmutable en este MVP: <strong>Abierto</strong>.
-            </div>
-          </div>
-
-          <div className="py-2.5 flex flex-col sm:flex-row sm:items-start justify-between gap-1">
-            <div className="font-semibold text-slate-900 sm:w-1/3">Fecha de apertura</div>
-            <div className="text-slate-600 sm:w-2/3">
-              Se registra automáticamente con timestamp exacto en el momento de crear el expediente.
-            </div>
-          </div>
-
-          <div className="py-2.5 flex flex-col sm:flex-row sm:items-start justify-between gap-1">
-            <div className="font-semibold text-slate-900 sm:w-1/3">Creador</div>
-            <div className="text-slate-600 sm:w-2/3">
-              Se registra a partir de la sesión autenticada cuando exista. <em>Sin autenticación, no se inventa una identidad ni se presenta al responsable como creador verificado.</em> (Probable mediante el conmutador en la barra superior).
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* 5.3 Reglas Estrictas */}
+      {/* HU-02 */}
       <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-2xs space-y-3">
         <div className="flex items-center gap-2 text-xs font-bold text-slate-900 uppercase tracking-wide">
-          <span className="w-6 h-6 rounded-md bg-slate-900 text-white flex items-center justify-center font-mono text-xs">
-            5.3
+          <span className="px-2 py-1 rounded-md bg-slate-900 text-white font-mono text-xs">
+            HU-02
           </span>
-          <span>Reglas de Validación Estricta</span>
+          <span>Control de Plazos Procesales para Escritos y Pruebas</span>
         </div>
-
         <ul className="space-y-2 text-xs text-slate-700">
           <li className="flex items-start gap-2">
             <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-            <span><strong>Regla 1:</strong> No se puede crear un expediente sin título, cliente, materia y responsable.</span>
+            <span>
+              <strong>Tipos de plazo y fases del proceso:</strong> Conserva las opciones generales (<em>Presentación de escritos, Anuncio/Práctica de prueba, Recurso/Apelación, Contestación, Otro</em>) e incorpora las fases según el tipo de proceso: en <strong>Proceso Penal</strong> (<em>Investigación previa, Formulación de cargos, Instrucción fiscal, Audiencia preparatoria de juicio, Audiencia de juicio</em>) y en <strong>Proceso Ordinario / Sumario</strong> (<em>Presentar la demanda, Notificaciones para completar actuaciones, Citación, Contestación a la demanda, Audiencia preliminar / Audiencia única, Audiencia de juicio</em>, entre otras).
+            </span>
           </li>
           <li className="flex items-start gap-2">
             <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-            <span><strong>Regla 2:</strong> Los campos de texto obligatorios deben completarse (no se admiten solo espacios en blanco).</span>
+            <span>
+              <strong>Validación de fecha límite:</strong> Obligatoria y siempre igual o posterior a la fecha de apertura del expediente.
+            </span>
           </li>
           <li className="flex items-start gap-2">
             <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-            <span><strong>Regla 3:</strong> El identificador interno no se introduce manualmente ni se confunde con el número judicial.</span>
+            <span>
+              <strong>Ordenamiento y alertas:</strong> Ordenados desde el vencimiento más cercano al más lejano; los plazos en estado <em>Pendiente</em> cuya fecha sea menor o igual a la actual se destacan en color rojo con alerta explícita.
+            </span>
           </li>
           <li className="flex items-start gap-2">
             <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-            <span><strong>Regla 4:</strong> El número de proceso judicial externo es opcional.</span>
+            <span>
+              <strong>Actualización de estado:</strong> Cambio directo de <em>Pendiente</em> a <em>Presentado/Cumplido</em> dentro de la ficha del expediente.
+            </span>
+          </li>
+        </ul>
+      </div>
+
+      {/* HU-03 */}
+      <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-2xs space-y-3">
+        <div className="flex items-center gap-2 text-xs font-bold text-slate-900 uppercase tracking-wide">
+          <span className="px-2 py-1 rounded-md bg-slate-900 text-white font-mono text-xs">
+            HU-03
+          </span>
+          <span>Bitácora de Actuaciones y Novedades del Caso</span>
+        </div>
+        <ul className="space-y-2 text-xs text-slate-700">
+          <li className="flex items-start gap-2">
+            <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+            <span>
+              <strong>Datos de la actuación:</strong> Fecha obligatoria (toma por defecto la fecha actual), tipo (Providencia/Auto, Audiencia, Escrito ingresado, Reunión con cliente, Otro) y detalle obligatorio.
+            </span>
           </li>
           <li className="flex items-start gap-2">
             <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-            <span><strong>Regla 5:</strong> Si la creación falla o hay campos incompletos, se conservan exactamente todos los datos escritos y se muestra el error claramente.</span>
+            <span>
+              <strong>Vinculación y cronología:</strong> Toda actuación queda vinculada automáticamente al expediente activo y se despliega ordenada de la más reciente a la más antigua.
+            </span>
+          </li>
+          <li className="flex items-start gap-2">
+            <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+            <span>
+              <strong>Protección contra duplicados y errores:</strong> Deshabilitación del botón durante el guardado y conservación íntegra de los datos escritos ante cualquier error de validación.
+            </span>
           </li>
         </ul>
 
         <div className="pt-4 border-t border-slate-100 flex justify-end">
           <button
+            type="button"
             onClick={onNuevoExpediente}
             className="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold text-white bg-slate-900 hover:bg-slate-800 rounded-lg cursor-pointer"
           >

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { 
   ExpedienteFormData, 
   Materia, 
@@ -16,8 +16,7 @@ import {
   Info, 
   Lock, 
   ShieldCheck, 
-  UserX, 
-  HelpCircle 
+  UserX 
 } from 'lucide-react';
 
 interface ExpedienteFormProps {
@@ -47,6 +46,7 @@ export const ExpedienteForm: React.FC<ExpedienteFormProps> = ({
     cliente: '',
     materia: '',
     materiaOtra: '',
+    tipoProceso: '',
     tipoAsunto: '',
     bitacora: '',
     responsable: '',
@@ -56,6 +56,7 @@ export const ExpedienteForm: React.FC<ExpedienteFormProps> = ({
   const [errores, setErrores] = useState<Record<string, string>>({});
   const [mensajeErrorGlobal, setMensajeErrorGlobal] = useState<string | null>(null);
   const [enviando, setEnviando] = useState<boolean>(false);
+  const submittingRef = useRef<boolean>(false);
 
   // Manejo de cambios en los inputs
   const handleChange = (
@@ -83,6 +84,13 @@ export const ExpedienteForm: React.FC<ExpedienteFormProps> = ({
       materia,
       // Si cambia de otra, limpia el campo específico
       materiaOtra: materia === 'otra' ? prev.materiaOtra : '',
+      // Si es penal, fija automáticamente el procedimiento penal; si cambia desde penal, limpia
+      tipoProceso:
+        materia === 'penal'
+          ? 'penal'
+          : prev.tipoProceso === 'penal'
+          ? ''
+          : prev.tipoProceso,
     }));
 
     if (errores.materia) {
@@ -101,6 +109,7 @@ export const ExpedienteForm: React.FC<ExpedienteFormProps> = ({
       cliente: 'Comercializadora Andina de Alimentos Cía. Ltda.',
       materia: 'civil',
       materiaOtra: '',
+      tipoProceso: 'sumario',
       tipoAsunto: 'Juicio ejecutivo mercantil',
       bitacora: 'Cliente entrega pagaré original vencido sin protesto por USD $45,000. Deudor no ha contestado requerimiento de pago. Se alista demanda ejecutiva con solicitud de medida cautelar de retención de cuentas.',
       responsable: 'Abg. Guillermo E. Vintimilla',
@@ -112,35 +121,39 @@ export const ExpedienteForm: React.FC<ExpedienteFormProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (submittingRef.current || enviando) return;
+    submittingRef.current = true;
     setEnviando(true);
     setMensajeErrorGlobal(null);
 
-    // Validación preliminar
-    const validacion = validarFormularioExpediente(formData);
-    if (!validacion.esValido) {
-      // Regla 5: Los datos ingresados se conservan, se muestran los errores
-      setErrores(validacion.errores);
-      setMensajeErrorGlobal('No se puede crear el expediente. Por favor corrija los campos obligatorios indicados.');
-      setEnviando(false);
-      // Desplazar suavemente hacia arriba
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-      return;
-    }
+    try {
+      // Validación preliminar
+      const validacion = validarFormularioExpediente(formData);
+      if (!validacion.esValido) {
+        // Regla 5: Los datos ingresados se conservan, se muestran los errores
+        setErrores(validacion.errores);
+        setMensajeErrorGlobal('No se puede crear el expediente. Por favor corrija los campos obligatorios indicados.');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        return;
+      }
 
-    // Ejecutar creación del expediente en el servicio
-    const sesion = sesionAutenticada
-      ? { autenticado: true, email: usuarioEmail }
-      : { autenticado: false };
+      // Ejecutar creación del expediente en el servicio
+      const sesion = sesionAutenticada
+        ? { autenticado: true, email: usuarioEmail }
+        : { autenticado: false };
 
-    const resultado = crearExpediente(formData, sesion);
+      const resultado = crearExpediente(formData, sesion);
 
-    if (resultado.exito && resultado.expediente) {
-      // Éxito: pasar a confirmación y ficha de resumen
-      onExpedienteCreado(resultado.expediente);
-    } else {
-      // Regla 5: Si la creación falla, se conservan los datos escritos y se muestra el error
-      setErrores(resultado.errores || {});
-      setMensajeErrorGlobal(resultado.mensaje || 'Error inesperado al crear el expediente. Los datos se han conservado.');
+      if (resultado.exito && resultado.expediente) {
+        // Éxito: pasar a confirmación y ficha de resumen
+        onExpedienteCreado(resultado.expediente);
+      } else {
+        // Regla 5: Si la creación falla, se conservan los datos escritos y se muestra el error
+        setErrores(resultado.errores || {});
+        setMensajeErrorGlobal(resultado.mensaje || 'Error inesperado al crear el expediente. Los datos se han conservado.');
+      }
+    } finally {
+      submittingRef.current = false;
       setEnviando(false);
     }
   };
@@ -489,6 +502,38 @@ export const ExpedienteForm: React.FC<ExpedienteFormProps> = ({
                 Texto breve para precisar la naturaleza específica del caso sin catálogo cerrado.
               </p>
             </div>
+          </div>
+
+          {/* Tipo de procedimiento (Penal automático o Ordinario / Sumario para materias no penales) */}
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <label htmlFor="tipoProceso" className="block text-xs font-semibold text-slate-700">
+                Tipo de procedimiento (fases procesales)
+              </label>
+              <span className="text-[11px] font-medium text-slate-500">
+                Opcional
+              </span>
+            </div>
+            {formData.materia === 'penal' ? (
+              <div className="px-3.5 py-2.5 text-xs rounded-lg border border-slate-200 bg-slate-50 text-slate-800 font-medium">
+                Proceso Penal (habilita etapas penales: investigación previa, formulación de cargos, instrucción fiscal, audiencia preparatoria y audiencia de juicio)
+              </div>
+            ) : (
+              <select
+                id="tipoProceso"
+                name="tipoProceso"
+                value={formData.tipoProceso}
+                onChange={handleChange}
+                className="w-full px-3.5 py-2.5 text-sm rounded-lg border border-slate-300 bg-white text-slate-900 focus:outline-hidden focus:border-slate-900 focus:ring-1 focus:ring-slate-900 transition-colors"
+              >
+                <option value="">Sin especificar (se puede elegir Ordinario o Sumario al registrar plazos)</option>
+                <option value="ordinario">Proceso Ordinario</option>
+                <option value="sumario">Proceso Sumario</option>
+              </select>
+            )}
+            <p className="mt-1 text-[11px] text-slate-500">
+              Define las fases procesales disponibles al registrar plazos dentro del expediente.
+            </p>
           </div>
 
           {/* Bitácora / Resumen inicial del caso (Regla 5.2) */}
