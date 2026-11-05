@@ -1,20 +1,19 @@
 import React, { useState } from 'react';
 import { Expediente } from '../types/expediente';
-import { 
-  CheckCircle2, 
-  Copy, 
-  Check, 
-  Printer, 
-  ArrowLeft, 
-  FolderPlus, 
-  Calendar, 
-  User, 
-  Briefcase, 
-  Hash, 
-  ShieldCheck, 
-  UserX, 
-  FileText, 
-  ExternalLink 
+import {
+  CheckCircle2,
+  Copy,
+  Check,
+  Printer,
+  ArrowLeft,
+  FolderPlus,
+  User,
+  Briefcase,
+  Hash,
+  ShieldCheck,
+  UserX,
+  FileText,
+  Trash2,
 } from 'lucide-react';
 
 interface FichaResumenProps {
@@ -22,6 +21,7 @@ interface FichaResumenProps {
   esRecienCreado?: boolean;
   onVolverALista: () => void;
   onCrearOtro: () => void;
+  onEliminarExpediente?: (id: string) => void;
 }
 
 export const FichaResumen: React.FC<FichaResumenProps> = ({
@@ -29,9 +29,11 @@ export const FichaResumen: React.FC<FichaResumenProps> = ({
   esRecienCreado = false,
   onVolverALista,
   onCrearOtro,
+  onEliminarExpediente,
 }) => {
   const [copiadoId, setCopiadoId] = useState(false);
   const [copiadoResumen, setCopiadoResumen] = useState(false);
+  const [confirmandoEliminar, setConfirmandoEliminar] = useState(false);
 
   // Formato legible de fecha y hora en español
   const formatearFecha = (fechaIso: string) => {
@@ -110,11 +112,43 @@ Generado por IurisExpediente Legaltech
           <span>Volver al registro general de expedientes</span>
         </button>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          {onEliminarExpediente && (
+            confirmandoEliminar ? (
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md border border-rose-200 bg-rose-50 text-xs">
+                <span className="font-medium text-rose-900 whitespace-nowrap">¿Eliminar?</span>
+                <button
+                  type="button"
+                  onClick={() => onEliminarExpediente(expediente.id)}
+                  className="px-2 py-0.5 font-semibold text-white bg-rose-700 hover:bg-rose-800 rounded transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+                >
+                  Confirmar
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setConfirmandoEliminar(false)}
+                  className="px-1.5 py-0.5 font-medium text-slate-700 hover:text-slate-900 rounded transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+                >
+                  Cancelar
+                </button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setConfirmandoEliminar(true)}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-rose-700 bg-white border border-rose-200 rounded-md hover:bg-rose-50 transition-colors shadow-2xs whitespace-nowrap shrink-0 cursor-pointer"
+                title="Eliminar este expediente"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>Eliminar</span>
+              </button>
+            )
+          )}
+
           <button
             type="button"
             onClick={handleCopiarResumenCompleto}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-700 bg-white border border-slate-200 rounded-md hover:bg-slate-50 transition-colors shadow-2xs cursor-pointer"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-700 bg-white border border-slate-200 rounded-md hover:bg-slate-50 transition-colors shadow-2xs whitespace-nowrap shrink-0 cursor-pointer"
             title="Copiar resumen en formato texto plano"
           >
             {copiadoResumen ? (
@@ -133,7 +167,7 @@ Generado por IurisExpediente Legaltech
           <button
             type="button"
             onClick={handleImprimir}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-700 bg-white border border-slate-200 rounded-md hover:bg-slate-50 transition-colors shadow-2xs cursor-pointer"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-700 bg-white border border-slate-200 rounded-md hover:bg-slate-50 transition-colors shadow-2xs whitespace-nowrap shrink-0 cursor-pointer"
             title="Imprimir o exportar como documento PDF"
           >
             <Printer className="w-3.5 h-3.5 text-slate-500" />
@@ -143,7 +177,7 @@ Generado por IurisExpediente Legaltech
           <button
             type="button"
             onClick={onCrearOtro}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-slate-900 hover:bg-slate-800 rounded-md transition-colors shadow-2xs cursor-pointer"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-slate-900 hover:bg-slate-800 rounded-md transition-colors shadow-2xs whitespace-nowrap shrink-0 cursor-pointer"
           >
             <FolderPlus className="w-3.5 h-3.5" />
             <span>Nuevo expediente</span>

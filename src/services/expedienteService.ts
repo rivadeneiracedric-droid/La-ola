@@ -1,6 +1,7 @@
 import { Expediente, ExpedienteFormData, ValidacionResultado, CreadorRegistro } from '../types/expediente';
 
-const STORAGE_KEY = 'legaltech_expedientes_mvp_v1';
+const LEGACY_STORAGE_KEY = 'legaltech_expedientes_mvp_v1';
+const STORAGE_KEY = 'legaltech_expedientes_mvp_v2';
 
 /**
  * Genera un UUID v4 estándar independiente para el identificador interno del expediente.
@@ -72,20 +73,23 @@ export function validarFormularioExpediente(data: ExpedienteFormData): Validacio
 }
 
 /**
- * Obtiene los expedientes almacenados localmente
+ * Obtiene los expedientes almacenados localmente.
+ * Inicia vacío (sin datos ficticios precargados) y limpia registros heredados previos.
  */
 export function obtenerExpedientes(): Expediente[] {
   try {
+    if (localStorage.getItem(LEGACY_STORAGE_KEY) !== null) {
+      localStorage.removeItem(LEGACY_STORAGE_KEY);
+    }
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) {
-      const iniciales = obtenerExpedientesIniciales();
-      guardarExpedientes(iniciales);
-      return iniciales;
+      return [];
     }
-    return JSON.parse(raw);
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
   } catch (error) {
     console.error('Error al cargar expedientes:', error);
-    return obtenerExpedientesIniciales();
+    return [];
   }
 }
 
@@ -98,6 +102,29 @@ export function guardarExpedientes(expedientes: Expediente[]): void {
   } catch (error) {
     console.error('Error al guardar expedientes:', error);
   }
+}
+
+/**
+ * Elimina un expediente individual por su identificador interno (UUID)
+ */
+export function eliminarExpediente(id: string): Expediente[] {
+  const actuales = obtenerExpedientes();
+  const actualizados = actuales.filter((exp) => exp.id !== id);
+  guardarExpedientes(actualizados);
+  return actualizados;
+}
+
+/**
+ * Borra todos los expedientes registrados
+ */
+export function eliminarTodosLosExpedientes(): Expediente[] {
+  try {
+    localStorage.removeItem(LEGACY_STORAGE_KEY);
+    guardarExpedientes([]);
+  } catch (error) {
+    console.error('Error al borrar todos los expedientes:', error);
+  }
+  return [];
 }
 
 /**
@@ -172,51 +199,4 @@ export function crearExpediente(
       mensaje: 'Ocurrió un error al guardar el expediente en la base local.',
     };
   }
-}
-
-/**
- * Expedientes de demostración inicial para verificar el comportamiento de la ficha
- */
-function obtenerExpedientesIniciales(): Expediente[] {
-  const uuid1 = '9a31b412-58e1-4c78-b1c2-721389e144a0';
-  const uuid2 = '4f8812c9-66d4-4b92-938a-e95ba12003c4';
-
-  return [
-    {
-      id: uuid1,
-      codigoInterno: 'EXP-2026-9A31B412',
-      numeroProceso: '09332-2026-00412',
-      titulo: 'Demanda ordinaria laboral por despido intempestivo',
-      cliente: 'Construcciones y Proyectos Civiles S.A.',
-      materia: 'laboral',
-      tipoAsunto: 'Despido intempestivo e indemnización',
-      bitacora: 'Reunión inicial celebrada el 20 de octubre. El cliente aportó contratos y finiquitos observados. Se remitió requerimiento prejudicial a la contraparte.',
-      responsable: 'Dra. María Elena Salgado',
-      estado: 'Abierto',
-      fechaApertura: '2026-10-24T14:30:00.000Z',
-      creador: {
-        autenticado: true,
-        identificador: 'rivadeneiracedric@gmail.com',
-        detalle: 'Usuario verificado: rivadeneiracedric@gmail.com',
-      },
-    },
-    {
-      id: uuid2,
-      codigoInterno: 'EXP-2026-4F8812C9',
-      numeroProceso: '', // Opcional: sin radicar todavía
-      titulo: 'Sucesión intestada y partición extrajudicial',
-      cliente: 'Familia Andrade Morales',
-      materia: 'civil',
-      tipoAsunto: 'Posesión efectiva de bienes hereditarios',
-      bitacora: 'Se recopilaron partidas de nacimiento y defunción. Pendiente inventario solemne de bienes inmuebles ante notaría pública.',
-      responsable: 'Abg. Roberto Carlos Mena',
-      estado: 'Abierto',
-      fechaApertura: '2026-10-27T09:15:00.000Z',
-      creador: {
-        autenticado: false,
-        identificador: 'Sin autenticación',
-        detalle: 'Sesión local no autenticada. No se asume identidad verificada ni se sustituye por el responsable.',
-      },
-    },
-  ];
 }

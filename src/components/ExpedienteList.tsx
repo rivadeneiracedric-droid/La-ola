@@ -1,32 +1,35 @@
 import React, { useState, useMemo } from 'react';
-import { Expediente, Materia } from '../types/expediente';
-import { 
-  Search, 
-  FolderPlus, 
-  Filter, 
-  FileText, 
-  Calendar, 
-  User, 
-  Briefcase, 
-  Hash, 
-  ChevronRight, 
-  Scale, 
-  AlertCircle 
+import { Expediente } from '../types/expediente';
+import {
+  Search,
+  FolderPlus,
+  User,
+  Briefcase,
+  Hash,
+  ChevronRight,
+  Scale,
+  Trash2,
 } from 'lucide-react';
 
 interface ExpedienteListProps {
   expedientes: Expediente[];
   onSeleccionarExpediente: (expediente: Expediente) => void;
   onNuevoExpediente: () => void;
+  onEliminarExpediente: (id: string) => void;
+  onEliminarTodos: () => void;
 }
 
 export const ExpedienteList: React.FC<ExpedienteListProps> = ({
   expedientes,
   onSeleccionarExpediente,
   onNuevoExpediente,
+  onEliminarExpediente,
+  onEliminarTodos,
 }) => {
   const [busqueda, setBusqueda] = useState('');
   const [filtroMateria, setFiltroMateria] = useState<string>('todas');
+  const [confirmandoEliminarId, setConfirmandoEliminarId] = useState<string | null>(null);
+  const [confirmandoBorrarTodos, setConfirmandoBorrarTodos] = useState<boolean>(false);
 
   // Filtrado reactivo en tiempo real
   const expedientesFiltrados = useMemo(() => {
@@ -64,20 +67,10 @@ export const ExpedienteList: React.FC<ExpedienteListProps> = ({
     }
   };
 
-  const getBadgeMateria = (materia: Materia) => {
-    switch (materia) {
-      case 'civil':
-        return 'text-sky-700 bg-sky-50 border-sky-200';
-      case 'laboral':
-        return 'text-indigo-700 bg-indigo-50 border-indigo-200';
-      case 'penal':
-        return 'text-rose-700 bg-rose-50 border-rose-200';
-      case 'administrativa':
-        return 'text-emerald-700 bg-emerald-50 border-emerald-200';
-      case 'otra':
-      default:
-        return 'text-slate-700 bg-slate-100 border-slate-200';
-    }
+  const handleConfirmarBorrarTodos = () => {
+    onEliminarTodos();
+    setConfirmandoBorrarTodos(false);
+    setConfirmandoEliminarId(null);
   };
 
   return (
@@ -93,13 +86,49 @@ export const ExpedienteList: React.FC<ExpedienteListProps> = ({
           </p>
         </div>
 
-        <button
-          onClick={onNuevoExpediente}
-          className="inline-flex items-center justify-center gap-2 px-4 py-2.5 text-xs font-semibold text-white bg-slate-900 hover:bg-slate-800 active:bg-slate-950 rounded-lg shadow-xs transition-colors self-start md:self-auto cursor-pointer"
-        >
-          <FolderPlus className="w-4 h-4" />
-          <span>Nuevo expediente</span>
-        </button>
+        <div className="flex flex-wrap items-center gap-2.5 self-start md:self-auto">
+          {expedientes.length > 0 && (
+            confirmandoBorrarTodos ? (
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-rose-200 bg-rose-50 text-xs">
+                <span className="font-medium text-rose-900 whitespace-nowrap">
+                  ¿Borrar los {expedientes.length} expedientes?
+                </span>
+                <button
+                  type="button"
+                  onClick={handleConfirmarBorrarTodos}
+                  className="px-2.5 py-1 font-semibold text-white bg-rose-700 hover:bg-rose-800 rounded-md transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+                >
+                  Confirmar
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setConfirmandoBorrarTodos(false)}
+                  className="px-2 py-1 font-medium text-slate-700 hover:text-slate-900 rounded-md transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+                >
+                  Cancelar
+                </button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setConfirmandoBorrarTodos(true)}
+                className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 text-xs font-medium text-rose-700 bg-white hover:bg-rose-50 border border-rose-200 rounded-lg transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>Borrar todos</span>
+              </button>
+            )
+          )}
+
+          <button
+            type="button"
+            onClick={onNuevoExpediente}
+            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 text-xs font-semibold text-white bg-slate-900 hover:bg-slate-800 active:bg-slate-950 rounded-lg shadow-xs transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+          >
+            <FolderPlus className="w-4 h-4" />
+            <span>Nuevo expediente</span>
+          </button>
+        </div>
       </div>
 
       {/* Métricas sobrias de un vistazo */}
@@ -166,8 +195,9 @@ export const ExpedienteList: React.FC<ExpedienteListProps> = ({
               return (
                 <button
                   key={tab.id}
+                  type="button"
                   onClick={() => setFiltroMateria(tab.id)}
-                  className={`px-3 py-1.5 text-xs font-medium rounded-md whitespace-nowrap transition-colors cursor-pointer ${
+                  className={`px-3 py-1.5 text-xs font-medium rounded-md whitespace-nowrap shrink-0 transition-colors cursor-pointer ${
                     activo
                       ? 'bg-slate-900 text-white'
                       : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
@@ -188,6 +218,7 @@ export const ExpedienteList: React.FC<ExpedienteListProps> = ({
           </span>
           {busqueda && (
             <button
+              type="button"
               onClick={() => setBusqueda('')}
               className="text-xs text-slate-500 hover:text-slate-900 underline cursor-pointer"
             >
@@ -204,7 +235,7 @@ export const ExpedienteList: React.FC<ExpedienteListProps> = ({
             <Scale className="w-6 h-6" />
           </div>
           <h3 className="text-base font-bold text-slate-900">
-            No se encontraron expedientes
+            No hay expedientes registrados
           </h3>
           <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
             {busqueda || filtroMateria !== 'todas'
@@ -213,8 +244,9 @@ export const ExpedienteList: React.FC<ExpedienteListProps> = ({
           </p>
           <div className="mt-5">
             <button
+              type="button"
               onClick={onNuevoExpediente}
-              className="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold text-white bg-slate-900 hover:bg-slate-800 rounded-lg shadow-xs cursor-pointer"
+              className="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold text-white bg-slate-900 hover:bg-slate-800 rounded-lg shadow-xs whitespace-nowrap shrink-0 cursor-pointer"
             >
               <FolderPlus className="w-4 h-4" />
               <span>Crear expediente</span>
@@ -223,76 +255,120 @@ export const ExpedienteList: React.FC<ExpedienteListProps> = ({
         </div>
       ) : (
         <div className="space-y-3">
-          {expedientesFiltrados.map((exp) => (
-            <div
-              key={exp.id}
-              onClick={() => onSeleccionarExpediente(exp)}
-              className="group bg-white border border-slate-200 hover:border-slate-300 rounded-xl p-5 transition-all shadow-2xs hover:shadow-xs cursor-pointer"
-            >
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                {/* Metadatos superiores */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500 mb-1.5">
-                    <span className="font-mono font-semibold text-slate-900 text-xs">
-                      {exp.codigoInterno}
-                    </span>
-                    <span aria-hidden="true">·</span>
-                    <span className="capitalize font-medium text-slate-700">
-                      {exp.materia === 'otra' ? `Otra (${exp.materiaOtra || 'Esp.'})` : exp.materia}
-                    </span>
-                    <span aria-hidden="true">·</span>
-                    <span className="text-emerald-700 font-medium">
-                      {exp.estado}
-                    </span>
-                    <span aria-hidden="true">·</span>
-                    <span>Apertura {formatearFechaCorta(exp.fechaApertura)}</span>
+          {expedientesFiltrados.map((exp) => {
+            const estaConfirmando = confirmandoEliminarId === exp.id;
+            return (
+              <div
+                key={exp.id}
+                onClick={() => onSeleccionarExpediente(exp)}
+                className="group bg-white border border-slate-200 hover:border-slate-300 rounded-xl p-5 transition-all shadow-2xs hover:shadow-xs cursor-pointer"
+              >
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  {/* Metadatos superiores */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500 mb-1.5">
+                      <span className="font-mono font-semibold text-slate-900 text-xs">
+                        {exp.codigoInterno}
+                      </span>
+                      <span aria-hidden="true">·</span>
+                      <span className="capitalize font-medium text-slate-700">
+                        {exp.materia === 'otra' ? `Otra (${exp.materiaOtra || 'Esp.'})` : exp.materia}
+                      </span>
+                      <span aria-hidden="true">·</span>
+                      <span className="text-emerald-700 font-medium">
+                        {exp.estado}
+                      </span>
+                      <span aria-hidden="true">·</span>
+                      <span>Apertura {formatearFechaCorta(exp.fechaApertura)}</span>
+                    </div>
+
+                    {/* Título */}
+                    <h3 className="text-base font-bold text-slate-900 group-hover:text-slate-800 transition-colors truncate">
+                      {exp.titulo}
+                    </h3>
+
+                    {/* Partes */}
+                    <div className="mt-2.5 flex flex-wrap items-center gap-y-1 gap-x-4 text-xs text-slate-600">
+                      <div className="flex items-center gap-1.5">
+                        <User className="w-3.5 h-3.5 text-slate-400" />
+                        <span>Cliente:</span>
+                        <strong className="font-semibold text-slate-800">{exp.cliente}</strong>
+                      </div>
+
+                      <div className="flex items-center gap-1.5">
+                        <Briefcase className="w-3.5 h-3.5 text-slate-400" />
+                        <span>Responsable:</span>
+                        <span className="text-slate-800">{exp.responsable}</span>
+                      </div>
+
+                      {exp.numeroProceso ? (
+                        <div className="flex items-center gap-1.5">
+                          <Hash className="w-3.5 h-3.5 text-slate-400" />
+                          <span>Proc. Judicial:</span>
+                          <span className="font-mono font-medium text-slate-800 tabular-nums">
+                            {exp.numeroProceso}
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="text-slate-400 italic">
+                          (Sin número judicial asignado)
+                        </div>
+                      )}
+                    </div>
                   </div>
 
-                  {/* Título */}
-                  <h3 className="text-base font-bold text-slate-900 group-hover:text-slate-800 transition-colors truncate">
-                    {exp.titulo}
-                  </h3>
-
-                  {/* Partes */}
-                  <div className="mt-2.5 flex flex-wrap items-center gap-y-1 gap-x-4 text-xs text-slate-600">
-                    <div className="flex items-center gap-1.5">
-                      <User className="w-3.5 h-3.5 text-slate-400" />
-                      <span>Cliente:</span>
-                      <strong className="font-semibold text-slate-800">{exp.cliente}</strong>
-                    </div>
-
-                    <div className="flex items-center gap-1.5">
-                      <Briefcase className="w-3.5 h-3.5 text-slate-400" />
-                      <span>Responsable:</span>
-                      <span className="text-slate-800">{exp.responsable}</span>
-                    </div>
-
-                    {exp.numeroProceso ? (
-                      <div className="flex items-center gap-1.5">
-                        <Hash className="w-3.5 h-3.5 text-slate-400" />
-                        <span>Proc. Judicial:</span>
-                        <span className="font-mono font-medium text-slate-800 tabular-nums">
-                          {exp.numeroProceso}
-                        </span>
+                  {/* Acciones de fila: Eliminar individual y Abrir ficha */}
+                  <div
+                    className="shrink-0 flex items-center justify-between sm:justify-end gap-3 sm:self-center border-t sm:border-t-0 pt-2 sm:pt-0 border-slate-100"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    {estaConfirmando ? (
+                      <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-rose-50 border border-rose-200 text-xs">
+                        <span className="text-rose-900 font-medium whitespace-nowrap">¿Eliminar?</span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            onEliminarExpediente(exp.id);
+                            setConfirmandoEliminarId(null);
+                          }}
+                          className="px-2 py-0.5 font-semibold text-white bg-rose-700 hover:bg-rose-800 rounded transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+                        >
+                          Sí
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setConfirmandoEliminarId(null)}
+                          className="px-1.5 py-0.5 font-medium text-slate-600 hover:text-slate-900 rounded transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+                        >
+                          No
+                        </button>
                       </div>
                     ) : (
-                      <div className="text-slate-400 italic">
-                        (Sin número judicial asignado)
-                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setConfirmandoEliminarId(exp.id)}
+                        className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-slate-500 hover:text-rose-700 hover:bg-rose-50 rounded-md transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+                        title={`Eliminar expediente ${exp.codigoInterno}`}
+                        aria-label={`Eliminar expediente ${exp.codigoInterno}`}
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                        <span>Eliminar</span>
+                      </button>
                     )}
+
+                    <button
+                      type="button"
+                      onClick={() => onSeleccionarExpediente(exp)}
+                      className="text-xs font-medium text-slate-500 group-hover:text-slate-900 transition-colors flex items-center gap-1 whitespace-nowrap shrink-0 cursor-pointer"
+                    >
+                      Ver ficha de resumen
+                      <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-slate-900 group-hover:translate-x-0.5 transition-all" />
+                    </button>
                   </div>
                 </div>
-
-                {/* Acción para abrir ficha */}
-                <div className="shrink-0 flex items-center gap-2 sm:self-center border-t sm:border-t-0 pt-2 sm:pt-0 border-slate-100">
-                  <span className="text-xs font-medium text-slate-500 group-hover:text-slate-900 transition-colors flex items-center gap-1">
-                    Ver ficha de resumen
-                    <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-slate-900 group-hover:translate-x-0.5 transition-all" />
-                  </span>
-                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>

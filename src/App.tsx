@@ -5,7 +5,11 @@ import { FichaResumen } from './components/FichaResumen';
 import { ExpedienteList } from './components/ExpedienteList';
 import { GuiaReglasView } from './components/GuiaReglasView';
 import { Expediente } from './types/expediente';
-import { obtenerExpedientes } from './services/expedienteService';
+import {
+  obtenerExpedientes,
+  eliminarExpediente,
+  eliminarTodosLosExpedientes,
+} from './services/expedienteService';
 
 type Vista = 'lista' | 'formulario' | 'ficha' | 'guia';
 
@@ -50,6 +54,26 @@ export default function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  const handleEliminarExpediente = (id: string) => {
+    const actualizados = eliminarExpediente(id);
+    setExpedientes(actualizados);
+    if (expedienteSeleccionado?.id === id) {
+      setExpedienteSeleccionado(null);
+      setEsRecienCreado(false);
+      setVista('lista');
+    }
+  };
+
+  const handleEliminarTodos = () => {
+    const actualizados = eliminarTodosLosExpedientes();
+    setExpedientes(actualizados);
+    setExpedienteSeleccionado(null);
+    setEsRecienCreado(false);
+    if (vista === 'ficha') {
+      setVista('lista');
+    }
+  };
+
   const handleVolverALista = () => {
     setVista('lista');
     setExpedienteSeleccionado(null);
@@ -85,6 +109,8 @@ export default function App() {
             expedientes={expedientes}
             onSeleccionarExpediente={handleSeleccionarExpediente}
             onNuevoExpediente={handleNuevoExpediente}
+            onEliminarExpediente={handleEliminarExpediente}
+            onEliminarTodos={handleEliminarTodos}
           />
         )}
 
@@ -103,6 +129,7 @@ export default function App() {
             esRecienCreado={esRecienCreado}
             onVolverALista={handleVolverALista}
             onCrearOtro={handleNuevoExpediente}
+            onEliminarExpediente={handleEliminarExpediente}
           />
         )}
 
