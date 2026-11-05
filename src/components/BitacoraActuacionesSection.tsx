@@ -8,8 +8,8 @@ import {
 import {
   obtenerFechaLocalHoy,
   validarFormularioActuacion,
-  crearActuacionProcesal,
-  eliminarActuacionProcesal,
+  crearActuacionProcesalAsync,
+  eliminarActuacionProcesalAsync,
   ordenarActuacionesDescendente,
 } from '../services/expedienteService';
 import {
@@ -111,7 +111,7 @@ export const BitacoraActuacionesSection: React.FC<BitacoraActuacionesSectionProp
       // Breve pausa para garantizar botón deshabilitado durante guardado y evitar duplicados
       await new Promise((resolve) => setTimeout(resolve, 100));
 
-      const resultado = crearActuacionProcesal(expediente.id, formData);
+      const resultado = await crearActuacionProcesalAsync(expediente.id, formData);
       if (resultado.exito && resultado.actuacionesExpediente) {
         onActuacionesActualizadas(resultado.actuacionesExpediente);
         setFormData({
@@ -141,14 +141,16 @@ export const BitacoraActuacionesSection: React.FC<BitacoraActuacionesSectionProp
     }
   };
 
-  const handleEliminar = (actuacionId: string) => {
-    const resultado = eliminarActuacionProcesal(actuacionId);
-    if (resultado.exito && resultado.todasLasActuaciones) {
+  const handleEliminar = async (actuacionId: string) => {
+    const resultado = await eliminarActuacionProcesalAsync(actuacionId);
+    if (resultado.exito) {
       const delExpediente = ordenarActuacionesDescendente(
-        resultado.todasLasActuaciones.filter((a) => a.expedienteId === expediente.id)
+        actuaciones.filter((a) => a.id !== actuacionId)
       );
       onActuacionesActualizadas(delExpediente);
       setConfirmandoEliminarId(null);
+    } else if (resultado.mensaje) {
+      setAvisoError(resultado.mensaje);
     }
   };
 

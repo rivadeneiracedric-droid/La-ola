@@ -26,6 +26,7 @@ interface ExpedienteListProps {
   expedientes: Expediente[];
   plazos: PlazoProcesal[];
   actuaciones: ActuacionProcesal[];
+  cargando?: boolean;
   onSeleccionarExpediente: (expediente: Expediente) => void;
   onNuevoExpediente: () => void;
   onEliminarExpediente: (id: string) => void;
@@ -36,6 +37,7 @@ export const ExpedienteList: React.FC<ExpedienteListProps> = ({
   expedientes,
   plazos,
   actuaciones,
+  cargando = false,
   onSeleccionarExpediente,
   onNuevoExpediente,
   onEliminarExpediente,
@@ -303,7 +305,13 @@ export const ExpedienteList: React.FC<ExpedienteListProps> = ({
       </div>
 
       {/* Lista de Expedientes */}
-      {expedientesFiltrados.length === 0 ? (
+      {cargando ? (
+        <div className="bg-white rounded-xl border border-slate-200 p-10 text-center shadow-2xs">
+          <p className="text-xs font-medium text-slate-500">
+            Cargando expedientes...
+          </p>
+        </div>
+      ) : expedientesFiltrados.length === 0 ? (
         <div className="bg-white rounded-xl border border-slate-200 p-12 text-center shadow-2xs">
           <div className="w-12 h-12 rounded-full bg-slate-100 text-slate-400 mx-auto flex items-center justify-center mb-3">
             <Scale className="w-6 h-6" />

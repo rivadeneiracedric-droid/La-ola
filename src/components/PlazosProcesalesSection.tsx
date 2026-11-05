@@ -13,9 +13,9 @@ import {
   obtenerFasesPorProcedimiento,
   etiquetaProcedimiento,
   validarFormularioPlazo,
-  crearPlazoProcesal,
-  actualizarEstadoPlazo,
-  eliminarPlazoProcesal,
+  crearPlazoProcesalAsync,
+  actualizarEstadoPlazoAsync,
+  eliminarPlazoProcesalAsync,
   esPlazoVencido,
   ordenarPlazosCronologicamente,
   formatearFechaHoraLocalParaInput,
@@ -178,7 +178,7 @@ export const PlazosProcesalesSection: React.FC<PlazosProcesalesSectionProps> = (
       // Pequeña pausa de confirmación para asegurar estado deshabilitado visible y evitar envíos duplicados
       await new Promise((resolve) => setTimeout(resolve, 100));
 
-      const resultado = crearPlazoProcesal(expediente, payload);
+      const resultado = await crearPlazoProcesalAsync(expediente, payload);
       if (resultado.exito && resultado.plazosExpediente) {
         onPlazosActualizados(resultado.plazosExpediente);
         setFormData({
@@ -207,11 +207,11 @@ export const PlazosProcesalesSection: React.FC<PlazosProcesalesSectionProps> = (
     }
   };
 
-  const handleCambiarEstado = (plazoId: string, nuevoEstado: EstadoPlazo) => {
-    const resultado = actualizarEstadoPlazo(plazoId, nuevoEstado);
-    if (resultado.exito && resultado.todosLosPlazos) {
+  const handleCambiarEstado = async (plazoId: string, nuevoEstado: EstadoPlazo) => {
+    const resultado = await actualizarEstadoPlazoAsync(plazoId, nuevoEstado);
+    if (resultado.exito && resultado.plazo) {
       const delExpediente = ordenarPlazosCronologicamente(
-        resultado.todosLosPlazos.filter((p) => p.expedienteId === expediente.id)
+        plazos.map((p) => (p.id === plazoId ? resultado.plazo! : p))
       );
       onPlazosActualizados(delExpediente);
       setAhoraMs(Date.now());
@@ -220,14 +220,16 @@ export const PlazosProcesalesSection: React.FC<PlazosProcesalesSectionProps> = (
     }
   };
 
-  const handleEliminar = (plazoId: string) => {
-    const resultado = eliminarPlazoProcesal(plazoId);
-    if (resultado.exito && resultado.todosLosPlazos) {
+  const handleEliminar = async (plazoId: string) => {
+    const resultado = await eliminarPlazoProcesalAsync(plazoId);
+    if (resultado.exito) {
       const delExpediente = ordenarPlazosCronologicamente(
-        resultado.todosLosPlazos.filter((p) => p.expedienteId === expediente.id)
+        plazos.filter((p) => p.id !== plazoId)
       );
       onPlazosActualizados(delExpediente);
       setConfirmandoEliminarId(null);
+    } else if (resultado.mensaje) {
+      setAvisoError(resultado.mensaje);
     }
   };
 

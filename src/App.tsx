@@ -11,15 +11,14 @@ import {
   TipoProcedimiento,
 } from './types/expediente';
 import {
-  obtenerExpedientes,
-  eliminarExpediente,
-  eliminarTodosLosExpedientes,
-  actualizarTipoProcesoExpediente,
-  obtenerTodosLosPlazos,
-  obtenerTodasLasActuaciones,
+  inicializarAlmacenamiento,
+  eliminarExpedienteAsync,
+  eliminarTodosLosExpedientesAsync,
+  actualizarTipoProcesoExpedienteAsync,
   ordenarPlazosCronologicamente,
   ordenarActuacionesDescendente,
 } from './services/expedienteService';
+import { AlertCircle, X } from 'lucide-react';
 
 type Vista = 'lista' | 'formulario' | 'ficha' | 'guia';
 
@@ -30,6 +29,8 @@ export default function App() {
   const [todasLasActuaciones, setTodasLasActuaciones] = useState<ActuacionProcesal[]>([]);
   const [expedienteSeleccionado, setExpedienteSeleccionado] = useState<Expediente | null>(null);
   const [esRecienCreado, setEsRecienCreado] = useState<boolean>(false);
+  const [cargandoInicial, setCargandoInicial] = useState<boolean>(true);
+  const [errorAlmacenamiento, setErrorAlmacenamiento] = useState<string | null>(null);
 
   // Control de sesión conforme a HU-01
   const [sesionAutenticada, setSesionAutenticada] = useState<boolean>(false);
@@ -37,9 +38,23 @@ export default function App() {
 
   // Cargar expedientes, plazos y actuaciones persistidos al iniciar
   useEffect(() => {
-    setExpedientes(obtenerExpedientes());
-    setTodosLosPlazos(obtenerTodosLosPlazos());
-    setTodasLasActuaciones(obtenerTodasLasActuaciones());
+    let activo = true;
+    inicializarAlmacenamiento()
+      .then((res) => {
+        if (!activo) return;
+        setExpedientes(res.expedientes);
+        setTodosLosPlazos(res.plazos);
+        setTodasLasActuaciones(res.actuaciones);
+        if (res.error) {
+          setErrorAlmacenamiento(res.error);
+        }
+      })
+      .finally(() => {
+        if (activo) setCargandoInicial(false);
+      });
+    return () => {
+      activo = false;
+    };
   }, []);
 
   const plazosExpedienteActivo = useMemo(() => {
@@ -78,11 +93,15 @@ export default function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleEliminarExpediente = (id: string) => {
-    const actualizados = eliminarExpediente(id);
-    setExpedientes(actualizados);
-    setTodosLosPlazos(obtenerTodosLosPlazos());
-    setTodasLasActuaciones(obtenerTodasLasActuaciones());
+  const handleEliminarExpediente = async (id: string) => {
+    const res = await eliminarExpedienteAsync(id);
+    if (!res.exito) {
+      if (res.mensaje) setErrorAlmacenamiento(res.mensaje);
+      return;
+    }
+    setExpedientes((prev) => prev.filter((exp) => exp.id !== id));
+    setTodosLosPlazos((prev) => prev.filter((p) => p.expedienteId !== id));
+    setTodasLasActuaciones((prev) => prev.filter((a) => a.expedienteId !== id));
     if (expedienteSeleccionado?.id === id) {
       setExpedienteSeleccionado(null);
       setEsRecienCreado(false);
@@ -90,9 +109,13 @@ export default function App() {
     }
   };
 
-  const handleEliminarTodos = () => {
-    const actualizados = eliminarTodosLosExpedientes();
-    setExpedientes(actualizados);
+  const handleEliminarTodos = async () => {
+    const res = await eliminarTodosLosExpedientesAsync();
+    if (!res.exito) {
+      if (res.mensaje) setErrorAlmacenamiento(res.mensaje);
+      return;
+    }
+    setExpedientes([]);
     setTodosLosPlazos([]);
     setTodasLasActuaciones([]);
     setExpedienteSeleccionado(null);
@@ -118,16 +141,20 @@ export default function App() {
     ]);
   };
 
-  const handleActualizarTipoProceso = (tipoProceso: TipoProcedimiento) => {
+  const handleActualizarTipoProceso = async (tipoProceso: TipoProcedimiento) => {
     if (!expedienteSeleccionado) return;
-    const actualizados = actualizarTipoProcesoExpediente(
-      expedienteSeleccionado.id,
-      tipoProceso
+    const idActual = expedienteSeleccionado.id;
+    setExpedientes((prev) =>
+      prev.map((exp) => (exp.id === idActual ? { ...exp, tipoProceso } : exp))
     );
-    setExpedientes(actualizados);
     setExpedienteSeleccionado((prev) =>
-      prev && prev.id === expedienteSeleccionado.id ? { ...prev, tipoProceso } : prev
+      prev && prev.id === idActual ? { ...prev, tipoProceso } : prev
     );
+
+    const res = await actualizarTipoProcesoExpedienteAsync(idActual, tipoProceso);
+    if (!res.exito && res.mensaje) {
+      setErrorAlmacenamiento(res.mensaje);
+    }
   };
 
   const handleVolverALista = () => {
@@ -160,11 +187,34 @@ export default function App() {
 
       {/* Contenido principal */}
       <main className="flex-1">
+        {errorAlmacenamiento && (
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
+            <div
+              role="alert"
+              className="p-3.5 rounded-lg bg-red-50 border border-red-200 flex items-start justify-between gap-3 text-xs text-red-800"
+            >
+              <div className="flex items-start gap-2.5">
+                <AlertCircle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
+                <span>{errorAlmacenamiento}</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setErrorAlmacenamiento(null)}
+                className="p-0.5 text-red-600 hover:text-red-900 rounded cursor-pointer shrink-0"
+                aria-label="Cerrar aviso"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        )}
+
         {vista === 'lista' && (
           <ExpedienteList
             expedientes={expedientes}
             plazos={todosLosPlazos}
             actuaciones={todasLasActuaciones}
+            cargando={cargandoInicial}
             onSeleccionarExpediente={handleSeleccionarExpediente}
             onNuevoExpediente={handleNuevoExpediente}
             onEliminarExpediente={handleEliminarExpediente}

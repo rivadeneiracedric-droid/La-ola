@@ -6,7 +6,7 @@ import {
 } from '../types/expediente';
 import { 
   validarFormularioExpediente, 
-  crearExpediente 
+  crearExpedienteAsync 
 } from '../services/expedienteService';
 import { 
   AlertCircle, 
@@ -119,7 +119,7 @@ export const ExpedienteForm: React.FC<ExpedienteFormProps> = ({
     setMensajeErrorGlobal(null);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (submittingRef.current || enviando) return;
     submittingRef.current = true;
@@ -142,7 +142,7 @@ export const ExpedienteForm: React.FC<ExpedienteFormProps> = ({
         ? { autenticado: true, email: usuarioEmail }
         : { autenticado: false };
 
-      const resultado = crearExpediente(formData, sesion);
+      const resultado = await crearExpedienteAsync(formData, sesion);
 
       if (resultado.exito && resultado.expediente) {
         // Éxito: pasar a confirmación y ficha de resumen
