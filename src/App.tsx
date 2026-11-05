@@ -181,6 +181,7 @@ export default function App() {
         onNuevoExpediente={handleNuevoExpediente}
         sesionAutenticada={sesionAutenticada}
         onToggleSesion={handleToggleSesion}
+        usuarioEmail={usuarioEmail}
         vistaActual={vista}
         onCambiarVista={handleCambiarVista}
       />

@@ -1,9 +1,9 @@
 import 'dotenv/config';
-import express, { Request, Response } from 'express';
+import express, { type Request, type Response } from 'express';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
-import {
+import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+import type {
   Expediente,
   ExpedienteFormData,
   PlazoProcesal,

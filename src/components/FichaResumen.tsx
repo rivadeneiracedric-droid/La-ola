@@ -90,8 +90,32 @@ export const FichaResumen: React.FC<FichaResumenProps> = ({
     }
   };
 
+  const copiarTextoSeguro = async (texto: string) => {
+    try {
+      if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+        await navigator.clipboard.writeText(texto);
+        return;
+      }
+    } catch {
+      // Fallback si el navegador o iframe restringe navigator.clipboard
+    }
+    try {
+      const textarea = document.createElement('textarea');
+      textarea.value = texto;
+      textarea.setAttribute('readonly', '');
+      textarea.style.position = 'fixed';
+      textarea.style.opacity = '0';
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textarea);
+    } catch {
+      // Ignorar si el portapapeles no está disponible
+    }
+  };
+
   const handleCopiarId = () => {
-    navigator.clipboard.writeText(expediente.id);
+    void copiarTextoSeguro(expediente.id);
     setCopiadoId(true);
     setTimeout(() => setCopiadoId(false), 2000);
   };
@@ -137,7 +161,7 @@ Actuaciones en Bitácora: ${actuaciones.length}
 Generado por EXP-Legal (La Ola)
 `.trim();
 
-    navigator.clipboard.writeText(textoResumen);
+    void copiarTextoSeguro(textoResumen);
     setCopiadoResumen(true);
     setTimeout(() => setCopiadoResumen(false), 2500);
   };

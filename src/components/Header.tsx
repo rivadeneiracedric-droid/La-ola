@@ -5,6 +5,7 @@ interface HeaderProps {
   onNuevoExpediente: () => void;
   sesionAutenticada: boolean;
   onToggleSesion: () => void;
+  usuarioEmail: string;
   vistaActual: 'lista' | 'formulario' | 'ficha' | 'guia';
   onCambiarVista: (vista: 'lista' | 'guia') => void;
 }
@@ -13,6 +14,7 @@ export const Header: React.FC<HeaderProps> = ({
   onNuevoExpediente,
   sesionAutenticada,
   onToggleSesion,
+  usuarioEmail,
   vistaActual,
   onCambiarVista,
 }) => {
@@ -83,8 +85,8 @@ export const Header: React.FC<HeaderProps> = ({
                 <>
                   <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
                   <span className="hidden sm:inline">Sesión Autenticada</span>
-                  <span className="text-[10px] text-emerald-600 bg-emerald-100/80 px-1 py-0.2 rounded font-mono">
-                    cedric@legal.io
+                  <span className="text-[10px] text-emerald-600 bg-emerald-100/80 px-1 py-0.2 rounded font-mono max-w-[140px] truncate">
+                    {usuarioEmail}
                   </span>
                 </>
               ) : (
